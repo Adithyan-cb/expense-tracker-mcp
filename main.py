@@ -1,17 +1,18 @@
+from contextlib import asynccontextmanager
 from typing import Annotated,Optional
 from fastmcp import FastMCP
 import os
 from pydantic import Field
-from sqlalchemy import create_engine, select, String, Float,func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
-
-mcp = FastMCP("expense tracker")
+from sqlalchemy import select, String, Float,func
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 CATEGORY_PATH = os.path.join(os.path.dirname(__file__),"categories.json")
 
 ############## DATABASE ############
 
-engine = create_engine("sqlite:///expenses.db")
+engine = create_async_engine("sqlite+aiosqlite:///expenses.db")
+async_session = async_sessionmaker(engine, expire_on_commit=False)
 
 class Base(DeclarativeBase):
     pass
@@ -36,12 +37,19 @@ class Expense(Base):
             "note": self.note,
         }
 
-Base.metadata.create_all(engine)
+@asynccontextmanager
+async def lifespan(app: FastMCP):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    await engine.dispose()
+
+mcp = FastMCP("expense tracker", lifespan=lifespan)
 
 ################# MCP TOOLS ###############
 
 @mcp.tool
-def add_expenses(
+async def add_expenses(
     date: Annotated[str, Field(description="Date in YYYY-MM-DD format")],
     amount: Annotated[float, Field(description="Amount spent", gt=0)],
     category: Annotated[str, Field(description="Main category, e.g. Food, Travel")],
@@ -49,7 +57,7 @@ def add_expenses(
     note: Annotated[str, Field(description="Optional note")] = "",
 ) -> dict:
     """Add a new expense entry to the database."""
-    with Session(engine) as session:
+    async with async_session() as session:
         expense = Expense(
             date=date,
             amount=amount,
@@ -58,32 +66,33 @@ def add_expenses(
             note=note,
         )
         session.add(expense)
-        session.commit()
+        await session.commit()
+        await session.refresh(expense)
         return expense.to_dict()
 
 
 @mcp.tool
-def list_expenses() -> list[dict]:
+async def list_expenses() -> list[dict]:
 
     """List all expenses in the database."""
-    with Session(engine) as session:
-        expenses = session.scalars(select(Expense).order_by(Expense.id)).all()
+    async with async_session() as session:
+        expenses = await session.scalars(select(Expense).order_by(Expense.id))
         return [e.to_dict() for e in expenses]
 
 
 @mcp.tool
-def list_expenses_within_range(
+async def list_expenses_within_range(
     start_date:Annotated[str,Field(description="start date in YYYY-MM-DD")],
     end_date:Annotated[str,Field(description="end date in YYYY-MM-DD")]
 )-> list[dict]:
     """list expenses within an inclusive date range"""
-    with Session(engine) as session:
+    async with async_session() as session:
         expenses = select(Expense).where(Expense.date.between(start_date,end_date))
-        results = session.scalars(expenses).all()
+        results = await session.scalars(expenses)
         return [e.to_dict() for e in results]
 
 @mcp.tool
-def summarize(
+async def summarize(
     start_date: Annotated[str, Field(description="Start date in YYYY-MM-DD (inclusive)")],
     end_date: Annotated[str, Field(description="End date in YYYY-MM-DD (inclusive)")],
     category: Annotated[Optional[str], Field(description="Filter to a single category")] = None,
@@ -99,8 +108,8 @@ def summarize(
     if category is not None:
         query = query.where(Expense.category == category)
 
-    with Session(engine) as session:
-        rows = session.execute(query).all()
+    async with async_session() as session:
+        rows = (await session.execute(query)).all()
 
     return [{"category": r.category, "total": r.total} for r in rows]
 
