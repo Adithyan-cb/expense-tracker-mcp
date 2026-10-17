@@ -1,0 +1,94 @@
+{
+  "Food": [
+    "Groceries",
+    "Restaurants",
+    "Drinks",
+    "Dessert",
+    "Candy",
+    "Ice Cream",
+    "Coffee",
+    "Snacks",
+    "Takeout"
+  ],
+  "Travel": [
+    "Flights",
+    "Train",
+    "Bus",
+    "Fuel",
+    "Parking",
+    "Toll",
+    "Taxi",
+    "Hotel"
+  ],
+  "Transport": [
+    "Public Transit",
+    "Ride Share",
+    "Bicycle",
+    "Maintenance"
+  ],
+  "Housing": [
+    "Rent",
+    "Mortgage",
+    "Utilities",
+    "Electricity",
+    "Water",
+    "Internet",
+    "Maintenance",
+    "Home Supplies"
+  ],
+  "Shopping": [
+    "Clothing",
+    "Footwear",
+    "Electronics",
+    "Furniture",
+    "Personal Care",
+    "Gifts"
+  ],
+  "Health": [
+    "Doctor",
+    "Pharmacy",
+    "Dentist",
+    "Insurance",
+    "Gym",
+    "Lab Tests"
+  ],
+  "Entertainment": [
+    "Movies",
+    "Games",
+    "Music",
+    "Streaming",
+    "Events",
+    "Hobbies"
+  ],
+  "Education": [
+    "Tuition",
+    "Books",
+    "Courses",
+    "Stationery"
+  ],
+  "Bills": [
+    "Phone",
+    "Mobile",
+    "Credit Card",
+    "Loan",
+    "Taxes",
+    "Subscriptions"
+  ],
+  "Finance": [
+    "Savings",
+    "Investments",
+    "Fees",
+    "Interest",
+    "Donations"
+  ],
+  "Personal": [
+    "Childcare",
+    "Pets",
+    "Clothing",
+    "Haircut"
+  ],
+  "Miscellaneous": [
+    "Other",
+    "Uncategorized"
+  ]
+}
