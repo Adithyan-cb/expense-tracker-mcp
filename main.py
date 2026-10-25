@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated,Optional
 from fastmcp import FastMCP
 import os
+import tempfile
 from pydantic import Field
 from sqlalchemy import select, String, Float,func
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
@@ -11,7 +12,12 @@ CATEGORY_PATH = os.path.join(os.path.dirname(__file__),"categories.json")
 
 ############## DATABASE ############
 
-engine = create_async_engine("sqlite+aiosqlite:///expenses.db")
+DB_PATH = os.environ.get(
+    "EXPENSES_DB_PATH",
+    os.path.join(tempfile.gettempdir(), "expenses.db"),
+)
+
+engine = create_async_engine(f"sqlite+aiosqlite:///{DB_PATH}")
 async_session = async_sessionmaker(engine, expire_on_commit=False)
 
 class Base(DeclarativeBase):
